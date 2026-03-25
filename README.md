@@ -13,49 +13,48 @@
 </code></pre></div>
 复制下面这段代码（把第一行的「2020-01-01」改成你注册 GitHub 的日期），粘贴到 Git Bash 里，按回车：
 查询注册时间进入https://api.github.com/users/{username}
-<pre class="container-S2LAkl language-bash"><code class="language-bash"><span class="token shebang important">#!/bin/bash</span>
-<span class="token comment"># ====================== 仅需修改这2处 ======================</span>
-<span class="token assign-left variable">START_DATE</span><span class="token operator">=</span><span class="token string">"2020-01-01"</span>  <span class="token comment"># 改成你的GitHub注册日期（YYYY-MM-DD）</span>
-<span class="token assign-left variable">REPO_FOLDER</span><span class="token operator">=</span><span class="token string">"fill_contribution"</span>  <span class="token comment"># 改成你克隆的仓库文件夹名</span>
-<span class="token comment"># ===========================================================</span>
+#!/bin/bash
+# ====================== 仅需修改这2处 ======================
+START_DATE="2020-01-01"  # 改成你的GitHub注册日期（格式：YYYY-MM-DD）
+REPO_FOLDER="fill_contribution"  # 改成你克隆的仓库文件夹名
+# ===========================================================
 
-<span class="token comment"># 进入仓库文件夹（确保路径正确）</span>
-<span class="token builtin class-name">cd</span> ~/Desktop/<span class="token variable">$REPO_FOLDER</span> <span class="token operator">||</span> <span class="token punctuation">{</span>
-    <span class="token builtin class-name">echo</span> <span class="token string">"错误：找不到仓库文件夹！请检查REPO_FOLDER是否填对"</span>
-    <span class="token builtin class-name">exit</span> <span class="token number">1</span>
-<span class="token punctuation">}</span>
+# 进入仓库文件夹（确保路径正确）
+cd ~/Desktop/$REPO_FOLDER || {
+    echo "错误：找不到仓库文件夹！请检查REPO_FOLDER是否填对"
+    exit 1
+}
 
-<span class="token comment"># 初始化时间戳（从注册日到今天）</span>
-<span class="token assign-left variable">current_date</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span><span class="token function">date</span> <span class="token parameter variable">-d</span> <span class="token string">"<span class="token variable">$START_DATE</span>"</span> +%s<span class="token variable">)</span></span>
-<span class="token assign-left variable">end_date</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span><span class="token function">date</span> +%s<span class="token variable">)</span></span>
+# 初始化时间戳（从注册日到今天）
+current_date=$(date -d "$START_DATE" +%s)
+end_date=$(date +%s)
 
-<span class="token comment"># 循环每天创建1次随机时间的提交</span>
-<span class="token keyword">while</span> <span class="token punctuation">[</span> <span class="token string">"<span class="token variable">$current_date</span>"</span> <span class="token parameter variable">-le</span> <span class="token string">"<span class="token variable">$end_date</span>"</span> <span class="token punctuation">]</span><span class="token punctuation">;</span> <span class="token keyword">do</span>
-    <span class="token comment"># 转换为日期格式</span>
-    <span class="token assign-left variable">date_str</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$(</span><span class="token function">date</span> <span class="token parameter variable">-d</span> <span class="token string">"@<span class="token variable">$current_date</span>"</span> +<span class="token string">"%Y-%m-%d"</span><span class="token variable">)</span></span>
-    <span class="token builtin class-name">echo</span> <span class="token string">"正在补 <span class="token variable">$date_str</span> 的1次贡献..."</span>
+# 循环每天创建1次随机时间的提交
+while [ "$current_date" -le "$end_date" ]; do
+    # 转换为日期格式
+    date_str=$(date -d "@$current_date" +"%Y-%m-%d")
+    echo "正在补 $date_str 的1次贡献..."
     
-    <span class="token comment"># 生成随机提交时间（9:00-21:00之间，模拟真人工作时间）</span>
-    <span class="token assign-left variable">random_hour</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$((</span><span class="token number">9</span> <span class="token operator">+</span> RANDOM <span class="token operator">%</span> <span class="token number">12</span><span class="token variable">))</span></span>  <span class="token comment"># 随机小时：9-21点</span>
-    <span class="token assign-left variable">random_minute</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$((</span>RANDOM <span class="token operator">%</span> <span class="token number">60</span><span class="token variable">))</span></span>    <span class="token comment"># 随机分钟：0-59分</span>
-    <span class="token assign-left variable">random_time</span><span class="token operator">=</span><span class="token string">"<span class="token variable">$random_hour</span>:<span class="token variable">$random_minute</span>:00"</span>
+    # 生成随机提交时间（9:00-21:00之间，模拟真人工作时间）
+    random_hour=$((9 + RANDOM % 12))  # 随机小时：9-21点
+    random_minute=$((RANDOM % 60))    # 随机分钟：0-59分
+    random_time="$random_hour:$random_minute:00"
     
-    <span class="token comment"># 创建空提交（自动跳过已提交的日期，不会重复）</span>
-    <span class="token assign-left variable">GIT_AUTHOR_DATE</span><span class="token operator">=</span><span class="token string">"<span class="token variable">$date_str</span> <span class="token variable">$random_time</span>"</span> <span class="token assign-left variable">GIT_COMMITTER_DATE</span><span class="token operator">=</span><span class="token string">"<span class="token variable">$date_str</span> <span class="token variable">$random_time</span>"</span> <span class="token punctuation">\</span>
-    <span class="token function">git</span> commit --allow-empty <span class="token parameter variable">-m</span> <span class="token string">"Daily contribution - <span class="token variable">$date_str</span> <span class="token variable">$random_time</span>"</span>
+    # 创建空提交（自动跳过已提交的日期，不会重复）
+    GIT_AUTHOR_DATE="$date_str $random_time" GIT_COMMITTER_DATE="$date_str $random_time" \
+    git commit --allow-empty -m "Daily contribution - $date_str $random_time"
     
-    <span class="token comment"># 每次提交后暂停1-2秒（模拟真人操作间隔，降低风险）</span>
-    <span class="token function">sleep</span> <span class="token variable"><span class="token variable">$((</span><span class="token number">1</span> <span class="token operator">+</span> RANDOM <span class="token operator">%</span> <span class="token number">2</span><span class="token variable">))</span></span>
+    # 每次提交后暂停1-2秒（模拟真人操作间隔，降低风险）
+    sleep $((1 + RANDOM % 2))
     
-    <span class="token comment"># 时间戳+1天，处理下一天</span>
-    <span class="token assign-left variable">current_date</span><span class="token operator">=</span><span class="token variable"><span class="token variable">$((</span>current_date <span class="token operator">+</span> <span class="token number">86400</span><span class="token variable">))</span></span>
-<span class="token keyword">done</span>
+    # 时间戳+1天，处理下一天
+    current_date=$((current_date + 86400))
+done
 
-<span class="token comment"># 推送至GitHub（分批次推更安全，这里默认全推，新手不用改）</span>
-<span class="token builtin class-name">echo</span> <span class="token string">"所有日期补完，正在推送至GitHub..."</span>
-<span class="token function">git</span> push <span class="token parameter variable">-u</span> origin main
+# 推送至GitHub（分批次推更安全，这里默认全推）
+echo "所有日期补完，正在推送至GitHub..."
+git push -u origin main
 
-<span class="token builtin class-name">echo</span> <span class="token string">"✅ 每天1次的贡献补完！刷新GitHub主页查看效果"</span>
-</code></pre>
+echo "✅ 每天1次的贡献补完！刷新GitHub主页查看效果"
 等待运行：黑窗口会一行行显示 “正在补 XXXX-XX-XX 的贡献”，跑完后会自动把这些 “记录” 推到 GitHub；
 可能会弹个窗口让你输 GitHub 的用户名和密码（或验证码），输完就行。<img width="581" height="370" alt="QQ20260319-144805" src="https://github.com/user-attachments/assets/bc4aea96-f9d5-47e7-8197-d9a451ed3007" />
